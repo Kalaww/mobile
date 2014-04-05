@@ -2,13 +2,8 @@ import tkinter
 import math
 
 def main():
-    fichier = open("test.txt", "r")
-    ligne = fichier.readline()
+    n = fichierListPoid("test.txt")
     
-    liste = eval(ligne)
-    print(liste)
-    n = build(liste)
-    print(n)
     if type(n) is not Poid:
         n.setDistance()
     
@@ -18,9 +13,27 @@ def main():
     canvas.update()
     afficher(canvas, n)
     fenetre.mainloop()
+            
+def fichierListPoid(nom):
+    l = list()
+    fichier = open(nom, "r")
+    lignes = fichier.readlines()
     
+    for i in lignes:
+        k = i[:-1]
+        print("[{0}] : [{1}]".format(i,k))
+        if len(k) > 0:
+            l.append(int(k))
+    print(l)
     fichier.close()
-    
+    return constrParDiffEquilibre(l)
+
+def fichierArbre(nom):
+    fichier = open(nom, "r")
+    ligne = fichier.readline()
+    l = eval(ligne)
+    return build(l)
+
 def build(l):
 	n = Noeud()
 	if type(l[0]) is int:
@@ -42,7 +55,7 @@ def afficher(canvas, n):
     canvas.delete("all")
     echelle = 0.5
     echellePoid = (min(width, height)*0.8//len(n))//n.maximum()
-    echelleH = height*0.8//n.profondeurMax()
+    echelleH = height*0.8//n.profondeur()
     
     if type(n) is Poid:
         canvas.create_line(width//2, 0, width//2, height*0.2)
@@ -67,14 +80,29 @@ def dessineNoeud(canvas, n, x, y, echelle, echellePoid, echelleH):
     if type(n.droit) is Poid:
         longueur = echellePoid*n.droit.valeur
         canvas.create_oval(xD-longueur//2, y+echelleH, xD+longueur//2, y+echelleH+longueur)
+        canvas.create_text(xD, y+echelleH+longueur//2, text=str(n.droit))
     else:
         dessineNoeud(canvas, n.droit, xD, y+echelleH, echelle*echelle, echellePoid, echelleH)
     if type(n.gauche) is Poid:
         longueur = echellePoid*n.gauche.valeur
         canvas.create_oval(xG-longueur//2, y+echelleH, xG+longueur//2, y+echelleH+longueur)
+        canvas.create_text(xG, y+echelleH+longueur//2, text=str(n.gauche))
     else:
         dessineNoeud(canvas, n.gauche, xG, y+echelleH, echelle*echelle, echellePoid, echelleH)
 
+def constrParDiffEquilibre(l):
+    n = Noeud()
+    if len(l) < 2:
+        n = Poid(l[0])
+        return n
+    n.gauche = Poid(l[0])
+    n.droit = Poid(l[1])
+    
+    for i in range(2, len(l)):
+        n = n.constrParDiffEquilibre(l[i])
+    
+    return n
+    
 
 #### NOEUD ####
 class Noeud:
@@ -112,13 +140,32 @@ class Noeud:
     def __len__(self):
         return len(self.gauche) + len(self.droit)
         
-    def profondeurMax(self):
-        g = self.gauche.profondeurMax()
-        d = self.droit.profondeurMax()
+    def profondeur(self):
+        g = self.gauche.profondeur()
+        d = self.droit.profondeur()
         if g > d:
             return g+1
         else:
             return d+1
+    
+    def constrParDiffEquilibre(self, v):
+        poidG = self.gauche.peser()
+        poidD = self.droit.peser()
+        if v >= (poidG+poidD):
+            n = Noeud()
+            n.gauche = self
+            n.droit = Poid(v)
+            return n
+        if poidG == poidD:
+            if self.gauche.profondeur() > self.droit.profondeur():
+                self.droit = self.droit.constrParDiffEquilibre(v)
+            else:
+                self.gauche = self.gauche.constrParDiffEquilibre(v)
+        elif poidG > poidD :
+            self.droit = self.droit.constrParDiffEquilibre(v)
+        else:
+            self.gauche = self.gauche.constrParDiffEquilibre(v)
+        return self
 
 
 #### POID ####
@@ -142,5 +189,11 @@ class Poid(Noeud):
     def __len__(self):
         return 1
     
-    def profondeurMax(self):
+    def profondeur(self):
         return 1
+    
+    def constrParDiffEquilibre(self, v):
+        p = Noeud()
+        p.gauche = self
+        p.droit = Poid(v)
+        return p
