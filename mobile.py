@@ -1,54 +1,68 @@
-import tkinter
+#!/usr/bin/python3.3
+from tkinter import *
+from tkinter.messagebox import *
 import math
 
-def main():
-    n = fichierListPoid("test.txt")
-    
-    if type(n) is not Poid:
-        n.setDistance()
-    
-    fenetre = tkinter.Tk()
-    canvas = tkinter.Canvas(fenetre,width=800, height=600, background="white")
-    canvas.pack()
-    canvas.update()
-    afficher(canvas, n)
-    fenetre.mainloop()
-            
-def fichierListPoid(nom):
-    l = list()
+def startMobile(mobile):
+    if type(mobile) is not Poid:
+        mobile.setDistance()
+    afficher(canvas, mobile)
+
+#Lit un fichier et reconnais le format, renvoi le mobile contruit
+def lireFichier():
+    nom = nomFichier.get()
     fichier = open(nom, "r")
+    if fichier == None:
+        showwarning("Echec", "Aucun fichier de ce nom est présent")
+        return
     lignes = fichier.readlines()
-    
-    for i in lignes:
-        k = i[:-1]
-        print("[{0}] : [{1}]".format(i,k))
-        if len(k) > 0:
-            l.append(int(k))
-    print(l)
     fichier.close()
-    return constrParDiffEquilibre(l)
+    if len(lignes) == 0:
+        showwarning("Echec", "Le fichier est vide")
+        return
+    if len(lignes) == 1:
+        l = eval(lignes[0])
+        mobile = constrMobile(l)
+    else:
+        l = list()
+        for i in lignes:
+            k = i[:-1]
+            if len(k) > 0:
+                l.append(int(k))
+        mobile = constrParDiffEquilibre(l)
+    
+    startMobile(mobile)
 
-def fichierArbre(nom):
-    fichier = open(nom, "r")
-    ligne = fichier.readline()
-    l = eval(ligne)
-    return build(l)
-
-def build(l):
+#Construit le mobile selon une liste d'un mobile déjà formé
+def constrMobile(l):
 	n = Noeud()
 	if type(l[0]) is int:
 	    n.gauche = Poid(l[0])
 	elif type(l[0]) is list:
-	    n.gauche = build(l[0])
+	    n.gauche = constrMobile(l[0])
 	if len(l) < 2:
 	    return n.gauche
 	
 	if type(l[1]) is int:
 	    n.droit = Poid(l[1])
 	elif type(l[1]) is list:
-	    n.droit = build(l[1])
+	    n.droit = constrMobile(l[1])
 	return n
 
+def constrParDiffEquilibre(l):
+    n = Noeud()
+    if len(l) < 2:
+        n = Poid(l[0])
+        return n
+    n.gauche = Poid(l[0])
+    n.droit = Poid(l[1])
+    
+    for i in range(2, len(l)):
+        n = n.constrParDiffEquilibre(l[i])
+    
+    return n
+
+#Affiche le mobile n dans la zone de dessin
 def afficher(canvas, n):
     width = canvas.winfo_width()
     height = canvas.winfo_height()
@@ -67,7 +81,7 @@ def afficher(canvas, n):
     
     canvas.update()
     
-    
+#Dessine un noeud de l'arbre représentant le mobile n dans la zone de dessin
 def dessineNoeud(canvas, n, x, y, echelle, echellePoid, echelleH):
     width = canvas.winfo_width()
     height = canvas.winfo_height()
@@ -89,19 +103,6 @@ def dessineNoeud(canvas, n, x, y, echelle, echellePoid, echelleH):
         canvas.create_text(xG, y+echelleH+longueur//2, text=str(n.gauche))
     else:
         dessineNoeud(canvas, n.gauche, xG, y+echelleH, echelle*echelle, echellePoid, echelleH)
-
-def constrParDiffEquilibre(l):
-    n = Noeud()
-    if len(l) < 2:
-        n = Poid(l[0])
-        return n
-    n.gauche = Poid(l[0])
-    n.droit = Poid(l[1])
-    
-    for i in range(2, len(l)):
-        n = n.constrParDiffEquilibre(l[i])
-    
-    return n
     
 
 #### NOEUD ####
@@ -197,3 +198,31 @@ class Poid(Noeud):
         p.gauche = self
         p.droit = Poid(v)
         return p
+        
+
+#### MAIN ####
+
+if __name__ == "__main__":
+    #mobile
+    mobile = Noeud()
+
+    #création de la fenêtre
+    fenetre = Tk()
+
+    #création de la zone de paramétrage
+    param = Frame(fenetre, borderwidth=2)
+    param.pack(pady=10)
+    labelFichier = Label(param, text="Nom du fichier")
+    labelFichier.pack(side=LEFT, padx=5)
+    nomFichier = StringVar()
+    entreeFichier = Entry(param, textvariable=nomFichier)
+    entreeFichier.pack(side=LEFT, padx=5)
+    boutonFichier = Button(param, text="Charger", command=lireFichier)
+    boutonFichier.pack(side=LEFT, padx=5)
+
+    #création du canvas
+    canvas = Canvas(fenetre,width=800, height=600, background="white")
+    canvas.pack()
+    canvas.update()
+
+    fenetre.mainloop()
