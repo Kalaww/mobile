@@ -3,6 +3,7 @@ from tkinter import *
 from tkinter.messagebox import *
 import math
 
+#Initialise le mobile et l'affiche
 def startMobile(mobile):
     if type(mobile) is not Poid:
         mobile.setDistance()
@@ -10,6 +11,7 @@ def startMobile(mobile):
 
 #Lit un fichier et reconnais le format, renvoi le mobile contruit
 def lireFichier():
+    global mobile
     nom = nomFichier.get()
     fichier = open(nom, "r")
     if fichier == None:
@@ -33,6 +35,27 @@ def lireFichier():
     
     startMobile(mobile)
 
+#Sauvegarde le mobile dans le fichier
+def saveMobile():
+    global mobile
+    nom = nomFichierSave.get()
+    fichier = open(nom, "w")
+    fichier.write(str(mobile))
+    print("TEST : {}".format(mobile))
+    fichier.close()
+
+#Sauvegarde de la liste des poids d'un mobile dans un fichier
+def saveList():
+    global mobile
+    nom = nomFichierSave.get()
+    fichier = open(nom, "w")
+    l = list()
+    mobile.toList(l)
+    for i in l:
+        fichier.write(str(i)+"\n")
+    fichier.write("\n")
+    fichier.close()
+
 #Construit le mobile selon une liste d'un mobile déjà formé
 def constrMobile(l):
 	n = Noeud()
@@ -49,6 +72,7 @@ def constrMobile(l):
 	    n.droit = constrMobile(l[1])
 	return n
 
+#Construit le mobile selon un algorithme d'arbre équilibré d'une profondeur minimale
 def constrParDiffEquilibre(l):
     n = Noeud()
     if len(l) < 2:
@@ -114,7 +138,7 @@ class Noeud:
         self.droit = None
     
     def __str__(self):
-        return "("+str(self.gauche)+","+str(self.droit)+")"
+        return "["+str(self.gauche)+","+str(self.droit)+"]"
     
     def __getattr__(self, nom):
         print("Pas d'attribut ",nom," dans un objet Poid")
@@ -167,6 +191,10 @@ class Noeud:
         else:
             self.gauche = self.gauche.constrParDiffEquilibre(v)
         return self
+    
+    def toList(self, l):
+        self.gauche.toList(l)
+        self.droit.toList(l)
 
 
 #### POID ####
@@ -198,6 +226,9 @@ class Poid(Noeud):
         p.gauche = self
         p.droit = Poid(v)
         return p
+    
+    def toList(self, l):
+        l.append(self.valeur)
         
 
 #### MAIN ####
@@ -212,13 +243,28 @@ if __name__ == "__main__":
     #création de la zone de paramétrage
     param = Frame(fenetre, borderwidth=2)
     param.pack(pady=10)
-    labelFichier = Label(param, text="Nom du fichier")
-    labelFichier.pack(side=LEFT, padx=5)
+    paramLecture = LabelFrame(param, borderwidth=2, text="Charger un fichier")
+    paramLecture.pack(side=LEFT, padx=10)
+    paramSave = LabelFrame(param, borderwidth=2, text="Sauvegarder un mobile")
+    paramSave.pack(side=LEFT, padx=10)
+    
+    #Zone de lecture d'un fichier
+    labelFichier = Label(paramLecture, text="Nom du fichier")
+    labelFichier.pack(side=LEFT, padx=10, pady=10)
     nomFichier = StringVar()
-    entreeFichier = Entry(param, textvariable=nomFichier)
-    entreeFichier.pack(side=LEFT, padx=5)
-    boutonFichier = Button(param, text="Charger", command=lireFichier)
-    boutonFichier.pack(side=LEFT, padx=5)
+    entreeFichier = Entry(paramLecture, textvariable=nomFichier)
+    entreeFichier.pack(side=LEFT, padx=10, pady=10)
+    boutonFichier = Button(paramLecture, text="Charger", command=lireFichier)
+    boutonFichier.pack(side=LEFT, padx=10, pady=10)
+    
+    #Zone de sauvegarde d'un mobile
+    labelFichierSave = Label(paramSave, text="Nom du fichier")
+    labelFichierSave.pack(side=LEFT, padx=10, pady=10)
+    nomFichierSave = StringVar()
+    entreeFichierSave = Entry(paramSave, textvariable=nomFichierSave)
+    entreeFichierSave.pack(side=LEFT, padx=10, pady=10)
+    boutonFichierSave = Button(paramSave, text="Sauvegarder", command=saveMobile)
+    boutonFichierSave.pack(side=LEFT, padx=10, pady=10)
 
     #création du canvas
     canvas = Canvas(fenetre,width=800, height=600, background="white")
