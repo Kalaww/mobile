@@ -49,8 +49,7 @@ def saveList():
     global mobile
     nom = nomFichierSave.get()
     fichier = open(nom, "w")
-    l = list()
-    mobile.toList(l)
+    l = mobile.toList()
     for i in l:
         fichier.write(str(i)+"\n")
     fichier.write("\n")
@@ -86,127 +85,85 @@ def constrParDiffEquilibre(l):
     
     return n
 
-#Affiche le mobile n dans la zone de dessin
-def afficher(canvas, n):
-    width = canvas.winfo_width()
-    height = canvas.winfo_height()
-    canvas.delete("all")
-    echellePoids = width//largeurArbre(n)
-    echelleH = height*0.8//n.profondeur()
-    
-    if type(n) is Poids:
-        canvas.create_line(width//2, 0, width//2, height*0.2)
-        longueur = echellePoids*n.valeur
-        canvas.create_oval(width//2 - longueur//2, height*0.2, width//2 + longueur//2, height*0.2+longueur)
-    else:
-    	canvas.create_line(width*n.valeur, 0, width*n.valeur, height*0.1)
-    	dessineNoeud(canvas, n, width//2, height*0.1, echellePoids, echelleH)
-    
-    canvas.update()
-    
-#Dessine un noeud de l'arbre représentant le mobile n dans la zone de dessin
-def dessineNoeud(canvas, n, x, y, echellePoids, echelleH):
-    width = canvas.winfo_width()
-    height = canvas.winfo_height()
-    largeurNoeud = n.largeurNoeud(echellePoids)
-    xG = x - largeurNoeud*n.valeur//2
-    xD = xG + largeurNoeud//2
-    canvas.create_line(xG, y, xD, y)
-    canvas.create_line(xG, y, xG, y+echelleH)
-    canvas.create_line(xD, y, xD, y+echelleH)
-    
-    if type(n.droit) is Poids:
-        longueur = echellePoids*n.droit.valeur
-        canvas.create_oval(xD-longueur//2, y+echelleH, xD+longueur//2, y+echelleH+longueur)
-        canvas.create_text(xD, y+echelleH+longueur//2, text=str(n.droit))
-    else:
-        dessineNoeud(canvas, n.droit, xD, y+echelleH, echellePoids, echelleH)
-    if type(n.gauche) is Poids:
-        longueur = echellePoids*n.gauche.valeur
-        canvas.create_oval(xG-longueur//2, y+echelleH, xG+longueur//2, y+echelleH+longueur)
-        canvas.create_text(xG, y+echelleH+longueur//2, text=str(n.gauche))
-    else:
-        dessineNoeud(canvas, n.gauche, xG, y+echelleH, echellePoids, echelleH)
-
-#Affiche le mobile n dans la zone de dessin
-def afficherPhysique(canvas, n):
-    width = canvas.winfo_width()
-    height = canvas.winfo_height()
-    canvas.delete("all")
-    echellePoids = min(height,width)*0.4//max(largeurArbre(n), n.profondeur())
-    echelleH = height*0.8//n.profondeur()
-    
-    if type(n) is Poids:
-        canvas.create_line(width//2, 0, width//2, height*0.2)
-        longueur = echellePoids*n.valeur
-        canvas.create_oval(width//2 - longueur//2, height*0.2, width//2 + longueur//2, height*0.2+longueur)
-    else:
-    	canvas.create_line(width*n.valeur, 0, width*n.valeur, (int)(height*0.1))
-    	dessineNoeudPhysique(canvas, n, width//2, (int)(height*0.1), echellePoids, echellePoids)
-    
-    canvas.update()
-
-#Dessine un noeud de l'arbre représentant le mobile n dans la zone de dessin
-def dessineNoeudPhysique(canvas, n, x, y, echellePoids, echelleH):
-    width = canvas.winfo_width()
-    height = canvas.winfo_height()
-    
-    rayon = n.largeurNoeud(echellePoids)//4
-    masse = n.masse()*echellePoids
-    print(" RAYON {0} : MASSE {1}".format(rayon, masse))
-    angle = math.asin(masse/rayon)
-    print("ANGLE : {0} {1}".format(angle, angle*180//math.pi))
-    
-    xG = x - (int)(rayon*math.cos(angle))
-    yG = y - (int)(rayon*math.sin(angle))
-    print("TEST : {}".format(rayon*math.sin(angle)))
-    
-    print(x,",",y," - ", xG,",", yG)
-    
-    xD = (int)(xG+2*(xG-x))
-    yD = (int)(yG+2*(yG-y))
-    
-    canvas.create_line(xG, yG, xD, yD)
-    canvas.create_line(xG, yG, xG, yG+echelleH)
-    canvas.create_line(xD, yD, xD, yD+echelleH)
-    
-    if type(n.droit) is Poids:
-        longueur = echellePoids*n.droit.valeur
-        canvas.create_oval(xD-longueur//2, yD+echelleH, xD+longueur//2, yD+echelleH+longueur)
-        canvas.create_text(xD, yD+echelleH+longueur//2, text=str(n.droit))
-    else:
-        dessineNoeudPhysique(canvas, n.droit, xD, yD+echelleH, echellePoids, echelleH)
-    if type(n.gauche) is Poids:
-        longueur = echellePoids*n.gauche.valeur
-        canvas.create_oval(xG-longueur//2, yG+echelleH, xG+longueur//2, yG+echelleH+longueur)
-        canvas.create_text(xG, yG+echelleH+longueur//2, text=str(n.gauche))
-    else:
-        dessineNoeudPhysique(canvas, n.gauche, xG, yG+echelleH, echellePoids, echelleH)
-
-def largeurArbre(n):
-    l = list()
-    n.toList(l)
-    return sum(l)
-    
+#Dessine l'arbre du mobile sur le canvas à l'échelle
 def draw(canvas, n):
+    canvas.delete("all")
     width = canvas.winfo_width()
     height = canvas.winfo_height()
     
     hauteur = n.maximum()
-    n.coordPhysique()
+    n.calculCoord()
+    echelleW = width // n.largeurMax()
+    echelleH = height // n.hauteurMax()
+    echelle = min(echelleW, echelleH)*0.9
     
     drawNoeud(canvas, n, width//2, 0, hauteur)
-    
+    canvas.scale("all", width//2, 0, echelle, echelle)
+    canvas.update()
+
+#Dessine le noeud sur le canvas à la position x,y
 def drawNoeud(canvas, n, x, y, hauteur):
+    canvas.create_line(x, y, x, y + hauteur)
     
     if type(n) is Poids:
-        canvas.create_oval(x - n.valeur//2, y, x + n.valeur//2, y + n.valeur)
+        canvas.create_oval(x - n.valeur//2, y + hauteur - n.valeur//2, x + n.valeur//2, y + hauteur + n.valeur//2, fill=colorNoeud(n.valeur, hauteur))
+        canvas.create_text(x, y + hauteur, text=str(n))
     else:
-        canvas.create_line(x + n.gauche.x, y + n.gauche.y, x + n.droit.x, y + n.droit.y)
-        canvas.create_line(x + n.gauche.x, y + n.gauche.y, x + n.gauche.x, y + n.gauche.y + hauteur)
-        canvas.create_line(x + n.droit.x, y + n.droit.y, x + n.droit.x, y + n.droit.y + hauteur)
-        drawNoeud(canvas, n.gauche, x + n.gauche.x, y + n.gauche.y, hauteur)
-        drawNoeud(canvas, n.droit, x + n.droit.x, y + n.droit.y, hauteur)
+        canvas.create_line(x + n.coordG.x, y + hauteur + n.coordG.y, x + n.coordD.x, y + hauteur + n.coordD.y)
+        drawNoeud(canvas, n.gauche, x + n.coordG.x, y + n.coordG.y + hauteur, hauteur)
+        drawNoeud(canvas, n.droit, x + n.coordD.x, y + n.coordD.y + hauteur, hauteur)
+
+#Defini une couleur en hexadecimal en fonction de la valeur
+def colorNoeud(valeur, maximum):
+    a = valeur*15//maximum
+    b = (a + 5)%16
+    c = (a + 10)%16
+    r = ""
+    if a == 10:
+        r = r+"a"
+    elif a == 11:
+        r = r+"b"
+    elif a == 12:
+        r = r+"c"
+    elif a == 13:
+        r = r+"d"
+    elif a == 14:
+        r = r+"e"
+    elif a == 15:
+        r = r+"f"
+    else:
+        r = r+str(a)
+    
+    if b == 10:
+        r = r+"a"
+    elif b == 11:
+        r = r+"b"
+    elif b == 12:
+        r = r+"c"
+    elif b == 13:
+        r = r+"d"
+    elif b == 14:
+        r = r+"e"
+    elif b == 15:
+        r = r+"f"
+    else:
+        r = r+str(b)
+    
+    if c == 10:
+        r = r+"a"
+    elif c == 11:
+        r = r+"b"
+    elif c == 12:
+        r = r+"c"
+    elif c == 13:
+        r = r+"d"
+    elif c == 14:
+        r = r+"e"
+    elif c == 15:
+        r = r+"f"
+    else:
+        r = r+str(c)
+    return "#"+r
 
 #### NOEUD ####
 class Noeud:
@@ -223,10 +180,12 @@ class Noeud:
     
     def __getattr__(self, nom):
         print("Pas d'attribut ",nom," dans un objet Poids")
-        
+    
+    #Poids total de l'arbre
     def peser(self):
         return self.gauche.peser() + self.droit.peser()
     
+    #Distance du sous arbre gauche selon les moments de torsion
     def setDistance(self):
         if type(self.gauche) is Noeud:
             self.gauche.setDistance()
@@ -234,6 +193,7 @@ class Noeud:
             self.droit.setDistance()
         self.valeur = self.droit.peser() / (self.gauche.peser()+self.droit.peser())
     
+    #Poids max de l'arbre
     def maximum(self):
         g = self.gauche.maximum()
         d = self.droit.maximum()
@@ -244,7 +204,8 @@ class Noeud:
     
     def __len__(self):
         return len(self.gauche) + len(self.droit)
-        
+    
+    #Profondeur de l'arbre   
     def profondeur(self):
         g = self.gauche.profondeur()
         d = self.droit.profondeur()
@@ -253,6 +214,7 @@ class Noeud:
         else:
             return d+1
     
+    #Construit le mobile selon un algorithme d'arbre équilibré d'une profondeur minimale
     def constrParDiffEquilibre(self, v):
         poidG = self.gauche.peser()
         poidD = self.droit.peser()
@@ -272,10 +234,11 @@ class Noeud:
             self.gauche = self.gauche.constrParDiffEquilibre(v)
         return self
     
-    def toList(self, l):
-        self.gauche.toList(l)
-        self.droit.toList(l)
+    #Liste des poids
+    def toList(self):
+        return self.gauche.toList().extend(self.droit.toList())
     
+    #Largeur du noeud
     def largeurNoeud(self):
         g = 0
         d = 0
@@ -290,13 +253,29 @@ class Noeud:
             d = self.droit.largeurNoeud()
         
         return g+d
-        
+    
+    #Masse de noeud : difference des poids
     def masse(self):
         g = self.gauche.peser()
         d = self.droit.peser()
         return g-d
     
-    def coordPhysique(self):
+    #Calcul des coordonnees pour le cas des moments de torsion
+    def calculCoord(self):
+        largeur = self.largeurNoeud()//2
+        self.coordG.x = -largeur*self.valeur
+        self.coordG.y = 0
+        self.coordD.x = self.coordG.x + largeur
+        self.coordD.y = 0
+        
+        if type(self.gauche) is not Poids:
+            self.gauche.calculCoord()
+        
+        if type(self.droit) is not Poids:
+            self.droit.calculCoord()
+    
+    #Calcul des coordonnees pour le cas prise en compte des valeurs des poids
+    def calculCoordPhysique(self):
         rayon = self.largeurNoeud()//4+1
         masse = self.masse()
         print("RAYON :{0}  MASSE :{1}".format(rayon, masse))
@@ -309,21 +288,37 @@ class Noeud:
         self.coordD.y = -self.coordG.y
         
         if type(self.gauche) is not Poids:
-            self.gauche.coordPhysique()
+            self.gauche.calculCoordPhysique()
         
         if type(self.droit) is not Poids:
-            self.droit.coordPhysique()
-
+            self.droit.calculCoordPhysique()
+    
+    #Largeur de l'arbre
+    def largeurMax(self):
+        return - self.gauche.largeurMaxGauche() + self.droit.largeurMaxDroit()
+    
+    #Largeur du côté gauche
+    def largeurMaxGauche(self):
+        return self.coordG.x + self.gauche.largeurMaxGauche()
+    
+    #Largeur du côté droit
+    def largeurMaxDroit(self):
+        return self.coordD.x + self.droit.largeurMaxDroit()
+    
+    #Hauteur de l'arbre
+    def hauteurMax(self):
+        maximum = self.maximum()
+        return maximum * self.profondeur() + maximum//2
 
 #### POID ####
 class Poids(Noeud):
     
     def __init__(self, v):
-        self.valeur = v
+        self.valeur = v +1
         self.coord = Coord()
     
     def __str__(self):
-        return str(self.valeur)
+        return str(self.valeur-1)
     
     def __getattr__(self, nom):
         print("Pas d'attribut ",nom," dans un objet Poids")
@@ -346,8 +341,14 @@ class Poids(Noeud):
         p.droit = Poids(v)
         return p
     
-    def toList(self, l):
-        l.append(self.valeur)
+    def toList(self):
+        return [self.valeur-1]
+        
+    def largeurMaxGauche(self):
+        return -self.valeur//2
+    
+    def largeurMaxDroit(self):
+        return self.valeur//2
 
 class Coord:
     def __init__(self):
