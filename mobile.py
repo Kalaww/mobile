@@ -1,6 +1,7 @@
 #!/usr/bin/python3.3
 from tkinter import *
 from tkinter.messagebox import *
+from tkinter.filedialog import *
 import math
 
 #Initialise le mobile et l'affiche
@@ -12,9 +13,10 @@ def startMobile(mobile):
 #Lit un fichier et reconnais le format, renvoi le mobile contruit
 def lireFichier():
     global mobile
-    nom = nomFichier.get()
-    fichier = open(nom, "r")
-    if fichier == None:
+    try:
+        nomFichier = askopenfilename(title="Ouvrir un fichier", filetypes=[("fichiers txt",".txt"),("tous fichiers",".*")])
+        fichier = open(nomFichier, "r")
+    except IOError:
         showwarning("Echec", "Aucun fichier de ce nom est présent")
         return
     lignes = fichier.readlines()
@@ -31,24 +33,25 @@ def lireFichier():
             k = i[:-1]
             if len(k) > 0:
                 l.append(int(k))
+        print("LIST : {}".format(l))
         mobile = constrParDiffEquilibre(l)
+        print("MOBILE : {}".format(mobile))
     
     startMobile(mobile)
 
 #Sauvegarde le mobile dans le fichier
 def saveMobile():
     global mobile
-    nom = nomFichierSave.get()
-    fichier = open(nom, "w")
+    nomFichier = asksaveasfilename(title="Sauvegarder un mobile", filetypes=[("fichiers txt",".txt"),("tous fichiers",".*")])
+    fichier = open(nomFichier, "w")
     fichier.write(str(mobile))
-    print("TEST : {}".format(mobile))
     fichier.close()
 
 #Sauvegarde de la liste des poids d'un mobile dans un fichier
 def saveList():
     global mobile
-    nom = nomFichierSave.get()
-    fichier = open(nom, "w")
+    nomFichier = asksaveasfilename(title="Sauvegarder un mobile", filetypes=[("fichiers txt",".txt"),("tous fichiers",".*")])
+    fichier = open(nomFichier, "w")
     l = mobile.toList()
     for i in l:
         fichier.write(str(i)+"\n")
@@ -92,7 +95,7 @@ def draw(canvas, n):
     height = canvas.winfo_height()
     
     hauteur = n.maximum()
-    n.calculCoordPhysique()
+    n.calculCoord()
     echelleW = width // n.largeurMax()
     echelleH = height // n.hauteurMax()
     echelle = min(echelleW, echelleH)*0.9
@@ -236,7 +239,9 @@ class Noeud:
     
     #Liste des poids
     def toList(self):
-        return self.gauche.toList().extend(self.droit.toList())
+        l = self.gauche.toList()
+        l.extend(self.droit.toList())
+        return l
     
     #Largeur du noeud
     def largeurNoeud(self):
@@ -363,32 +368,21 @@ if __name__ == "__main__":
 
     #création de la fenêtre
     fenetre = Tk()
+    
+    #création du menu
+    menu = Menu(fenetre)
+    menufichier = Menu(menu)
+    menufichier.add_command(label="Ouvrir",command=lireFichier)
+    menufichier.add_command(label="Sauvegarder mobile",command=saveMobile)
+    menufichier.add_command(label="Sauvegarder liste des pois",command=saveList)
+    menufichier.add_command(label="Quitter",command=fenetre.destroy)
+    menu.add_cascade(label="Fichier",menu=menufichier)
+    
+    fenetre.config(menu=menu)
 
     #création de la zone de paramétrage
     param = Frame(fenetre, borderwidth=2)
-    param.pack(pady=10)
-    paramLecture = LabelFrame(param, borderwidth=2, text="Charger un fichier")
-    paramLecture.pack(side=LEFT, padx=10)
-    paramSave = LabelFrame(param, borderwidth=2, text="Sauvegarder un mobile")
-    paramSave.pack(side=LEFT, padx=10)
-    
-    #Zone de lecture d'un fichier
-    labelFichier = Label(paramLecture, text="Nom du fichier")
-    labelFichier.pack(side=LEFT, padx=10, pady=10)
-    nomFichier = StringVar()
-    entreeFichier = Entry(paramLecture, textvariable=nomFichier)
-    entreeFichier.pack(side=LEFT, padx=10, pady=10)
-    boutonFichier = Button(paramLecture, text="Charger", command=lireFichier)
-    boutonFichier.pack(side=LEFT, padx=10, pady=10)
-    
-    #Zone de sauvegarde d'un mobile
-    labelFichierSave = Label(paramSave, text="Nom du fichier")
-    labelFichierSave.pack(side=LEFT, padx=10, pady=10)
-    nomFichierSave = StringVar()
-    entreeFichierSave = Entry(paramSave, textvariable=nomFichierSave)
-    entreeFichierSave.pack(side=LEFT, padx=10, pady=10)
-    boutonFichierSave = Button(paramSave, text="Sauvegarder", command=saveMobile)
-    boutonFichierSave.pack(side=LEFT, padx=10, pady=10)
+    #param.pack(pady=10)
 
     #création du canvas
     canvas = Canvas(fenetre,width=800, height=600, background="white")
