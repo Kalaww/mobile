@@ -92,7 +92,7 @@ def draw(canvas, n):
     height = canvas.winfo_height()
     
     hauteur = n.maximum()
-    n.calculCoord()
+    n.calculCoordPhysique()
     echelleW = width // n.largeurMax()
     echelleH = height // n.hauteurMax()
     echelle = min(echelleW, echelleH)*0.9
@@ -276,10 +276,9 @@ class Noeud:
     
     #Calcul des coordonnees pour le cas prise en compte des valeurs des poids
     def calculCoordPhysique(self):
-        rayon = self.largeurNoeud()//4+1
-        masse = self.masse()
-        print("RAYON :{0}  MASSE :{1}".format(rayon, masse))
-        angle = math.asin(masse)
+        rayon = self.largeurNoeud()/4
+        masse = self.masse()/2
+        angle = math.asin(masse/rayon)
         
         self.coordG.x = (int)(rayon*math.cos(angle))
         self.coordG.y = (int)(rayon*math.sin(angle))
