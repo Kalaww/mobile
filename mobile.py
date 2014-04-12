@@ -95,7 +95,10 @@ def draw(canvas, n):
     height = canvas.winfo_height()
     
     hauteur = n.maximum()
-    n.calculCoord()
+    if affichage == CLASSIC:
+        n.calculCoord()
+    elif affichage == PHYSIQUE:
+        n.calculCoordPhysique()
     echelleW = width // n.largeurMax()
     echelleH = height // n.hauteurMax()
     echelle = min(echelleW, echelleH)*0.9
@@ -167,6 +170,20 @@ def colorNoeud(valeur, maximum):
     else:
         r = r+str(c)
     return "#"+r
+
+#Redessine le mobile selon l'affichage classique
+def setAffichageClassic():
+    global affichage
+    affichage = CLASSIC
+    if mobile != None :
+        draw(canvas, mobile)
+
+#Redessine le mobile selon l'affichage physique
+def setAffichagePhysique():
+    global affichage
+    affichage = PHYSIQUE
+    if mobile != None :
+        draw(canvas, mobile)
 
 #### NOEUD ####
 class Noeud:
@@ -363,20 +380,31 @@ class Coord:
 #### MAIN ####
 
 if __name__ == "__main__":
+    #variables
+    CLASSIC = 0
+    PHYSIQUE = 1
+    affichage = CLASSIC
+    
     #mobile
-    mobile = Noeud()
+    mobile = None
 
     #création de la fenêtre
     fenetre = Tk()
     
     #création du menu
     menu = Menu(fenetre)
+    
     menufichier = Menu(menu)
     menufichier.add_command(label="Ouvrir",command=lireFichier)
     menufichier.add_command(label="Sauvegarder mobile",command=saveMobile)
     menufichier.add_command(label="Sauvegarder liste des pois",command=saveList)
     menufichier.add_command(label="Quitter",command=fenetre.destroy)
     menu.add_cascade(label="Fichier",menu=menufichier)
+    
+    menuaffichage = Menu(menu)
+    menuaffichage.add_command(label="Affichage classique",command=setAffichageClassic)
+    menuaffichage.add_command(label="Affichage physique",command=setAffichagePhysique)
+    menu.add_cascade(label="Affichage",menu=menuaffichage)
     
     fenetre.config(menu=menu)
 
