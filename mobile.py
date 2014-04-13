@@ -390,6 +390,7 @@ if __name__ == "__main__":
 
     #création de la fenêtre
     fenetre = Tk()
+    fenetre.geometry("800x600")
     
     #création du menu
     menu = Menu(fenetre)
@@ -410,11 +411,18 @@ if __name__ == "__main__":
 
     #création de la zone de paramétrage
     param = Frame(fenetre, borderwidth=2)
-    #param.pack(pady=10)
+    param.pack(side=LEFT, fill=Y)
+    
+    imgClassic = PhotoImage(file="res/classic.gif")
+    imgPhysique = PhotoImage(file="res/physique.gif")
+    boutonAffClassic = Button(param, command=setAffichageClassic, image=imgClassic)
+    boutonAffClassic.pack(side=TOP)
+    boutonAffPhysique = Button(param, command=setAffichagePhysique, image=imgPhysique)
+    boutonAffPhysique.pack(side=TOP)
 
     #création du canvas
-    canvas = Canvas(fenetre,width=800, height=600, background="white")
-    canvas.pack()
+    canvas = Canvas(fenetre, background="white")
+    canvas.pack(side=LEFT, fill=BOTH, expand=1)
     canvas.update()
 
     fenetre.mainloop()
