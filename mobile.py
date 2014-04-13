@@ -8,11 +8,12 @@ import math
 def startMobile(mobile):
     if type(mobile) is not Poids:
         mobile.setDistance()
-    draw(canvas, mobile)
+    dessine()
 
 #Lit un fichier et reconnais le format, renvoi le mobile contruit
 def lireFichier():
     global mobile
+    global status
     try:
         nomFichier = askopenfilename(title="Ouvrir un fichier", filetypes=[("fichiers txt",".txt"),("tous fichiers",".*")])
         fichier = open(nomFichier, "r")
@@ -36,7 +37,7 @@ def lireFichier():
         print("LIST : {}".format(l))
         mobile = constrParDiffEquilibre(l)
         print("MOBILE : {}".format(mobile))
-    
+    status.set("Fichier chargé : {}".format(nomFichier))
     startMobile(mobile)
 
 #Sauvegarde le mobile dans le fichier
@@ -89,26 +90,29 @@ def constrParDiffEquilibre(l):
     return n
 
 #Dessine l'arbre du mobile sur le canvas à l'échelle
-def draw(canvas, n):
+def dessine():
+    global canvas
+    global mobile
     canvas.delete("all")
     width = canvas.winfo_width()
     height = canvas.winfo_height()
     
-    hauteur = n.maximum()
+    hauteur = mobile.maximum()
     if affichage == CLASSIC:
-        n.calculCoord()
+        mobile.calculCoord()
     elif affichage == PHYSIQUE:
-        n.calculCoordPhysique()
-    echelleW = width // n.largeurMax()
-    echelleH = height // n.hauteurMax()
+        mobile.calculCoordPhysique()
+    echelleW = width // mobile.largeurMax()
+    echelleH = height // mobile.hauteurMax()
     echelle = min(echelleW, echelleH)*0.9
     
-    drawNoeud(canvas, n, width//2, 0, hauteur)
+    dessineNoeud(mobile, width//2, 0, hauteur)
     canvas.scale("all", width//2, 0, echelle, echelle)
     canvas.update()
 
 #Dessine le noeud sur le canvas à la position x,y
-def drawNoeud(canvas, n, x, y, hauteur):
+def dessineNoeud(n, x, y, hauteur):
+    global canvas
     canvas.create_line(x, y, x, y + hauteur)
     
     if type(n) is Poids:
@@ -116,8 +120,8 @@ def drawNoeud(canvas, n, x, y, hauteur):
         canvas.create_text(x, y + hauteur, text=str(n))
     else:
         canvas.create_line(x + n.coordG.x, y + hauteur + n.coordG.y, x + n.coordD.x, y + hauteur + n.coordD.y)
-        drawNoeud(canvas, n.gauche, x + n.coordG.x, y + n.coordG.y + hauteur, hauteur)
-        drawNoeud(canvas, n.droit, x + n.coordD.x, y + n.coordD.y + hauteur, hauteur)
+        dessineNoeud(n.gauche, x + n.coordG.x, y + n.coordG.y + hauteur, hauteur)
+        dessineNoeud(n.droit, x + n.coordD.x, y + n.coordD.y + hauteur, hauteur)
 
 #Defini une couleur en hexadecimal en fonction de la valeur
 def colorNoeud(valeur, maximum):
@@ -176,14 +180,14 @@ def setAffichageClassic():
     global affichage
     affichage = CLASSIC
     if mobile != None :
-        draw(canvas, mobile)
+        dessine()
 
 #Redessine le mobile selon l'affichage physique
 def setAffichagePhysique():
     global affichage
     affichage = PHYSIQUE
     if mobile != None :
-        draw(canvas, mobile)
+        dessine()
 
 #### NOEUD ####
 class Noeud:
@@ -398,31 +402,38 @@ if __name__ == "__main__":
     menufichier = Menu(menu)
     menufichier.add_command(label="Ouvrir",command=lireFichier)
     menufichier.add_command(label="Sauvegarder mobile",command=saveMobile)
-    menufichier.add_command(label="Sauvegarder liste des pois",command=saveList)
+    menufichier.add_command(label="Sauvegarder liste des poids",command=saveList)
     menufichier.add_command(label="Quitter",command=fenetre.destroy)
     menu.add_cascade(label="Fichier",menu=menufichier)
     
     menuaffichage = Menu(menu)
     menuaffichage.add_command(label="Affichage classique",command=setAffichageClassic)
     menuaffichage.add_command(label="Affichage physique",command=setAffichagePhysique)
+    menuaffichage.add_command(label="Reset",command=lambda:canvas.delete("all"))
     menu.add_cascade(label="Affichage",menu=menuaffichage)
     
     fenetre.config(menu=menu)
 
     #création de la zone de paramétrage
     param = Frame(fenetre, borderwidth=2)
-    param.pack(side=LEFT, fill=Y)
+    param.pack(side=TOP, fill=X)
     
     imgClassic = PhotoImage(file="res/classic.gif")
     imgPhysique = PhotoImage(file="res/physique.gif")
     boutonAffClassic = Button(param, command=setAffichageClassic, image=imgClassic)
-    boutonAffClassic.pack(side=TOP)
+    boutonAffClassic.pack(side=LEFT)
     boutonAffPhysique = Button(param, command=setAffichagePhysique, image=imgPhysique)
-    boutonAffPhysique.pack(side=TOP)
+    boutonAffPhysique.pack(side=LEFT)
 
     #création du canvas
     canvas = Canvas(fenetre, background="white")
-    canvas.pack(side=LEFT, fill=BOTH, expand=1)
+    canvas.pack(side=TOP, fill=BOTH, expand=1)
     canvas.update()
+    
+    #création de la barre de status
+    status = StringVar()
+    statusbar = Label(fenetre, textvariable=status, anchor=W)
+    status.set("Aucun fichier chargé")
+    statusbar.pack(side=BOTTOM, fill=X)
 
     fenetre.mainloop()
