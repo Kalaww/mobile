@@ -5,7 +5,8 @@ from tkinter.filedialog import *
 import math
 
 #Initialise le mobile et l'affiche
-def startMobile(mobile):
+def startMobile():
+    global mobile
     if type(mobile) is not Poids:
         mobile.setDistance()
     dessine()
@@ -39,7 +40,7 @@ def lireFichier():
         elif construction == MAXGAUCHE:
             mobile = constrParMaxGauche(l)
     status.set("Fichier chargé : {}".format(nomFichier))
-    startMobile(mobile)
+    startMobile()
 
 #Sauvegarde le mobile dans le fichier
 def saveMobile():
@@ -93,6 +94,7 @@ def constrParDiffEquilibre(l):
     
     return n
 
+#Construit le mobile en plaçant toutes les valeurs inferieurs dans le noeud droit, et supérieur dans le noeud parent
 def constrParMaxGauche(l):
     n = Noeud()
     l.sort()
@@ -113,6 +115,71 @@ def constrParMaxGauche(l):
         n = tmp
     return n
 
+#Construit le mobile en plaçant toutes les valeurs inferieurs dans le noeud gauche, et supérieur dans le noeud parent
+def constrParMaxDroit(l):
+    n = Noeud()
+    l.sort()
+    
+    if len(l) == 0:
+        showwarning("Erreur", "La liste de poids est vide")
+    elif len(l) == 1:
+        n = Poids(l[0])
+        return n
+    else:
+        n.droit = Poids(l[0])
+        n.gauche = Poids(l[1])
+    
+    for i in range(2,len(l)):
+        tmp = Noeud()
+        tmp.droit = Poids(l[i])
+        tmp.gauche = n
+        n = tmp
+    return n
+
+#Construit le mobile en plaçant toutes les valeurs superieurs dans le noeud gauche, et supérieur dans le noeud parent
+def constrParMinGauche(l):
+    n = Noeud()
+    l.sort()
+    l.reverse()
+    
+    if len(l) == 0:
+        showwarning("Erreur", "La liste de poids est vide")
+    elif len(l) == 1:
+        n = Poids(l[0])
+        return n
+    else:
+        n.droit = Poids(l[0])
+        n.gauche = Poids(l[1])
+    
+    for i in range(2,len(l)):
+        tmp = Noeud()
+        tmp.gauche = Poids(l[i])
+        tmp.droit = n
+        n = tmp
+    return n
+
+#Construit le mobile en plaçant toutes les valeurs superieurs dans le noeud droit, et supérieur dans le noeud parent
+def constrParMinDroit(l):
+    n = Noeud()
+    l.sort()
+    l.reverse()
+    
+    if len(l) == 0:
+        showwarning("Erreur", "La liste de poids est vide")
+    elif len(l) == 1:
+        n = Poids(l[0])
+        return n
+    else:
+        n.droit = Poids(l[0])
+        n.gauche = Poids(l[1])
+    
+    for i in range(2,len(l)):
+        tmp = Noeud()
+        tmp.droit = Poids(l[i])
+        tmp.gauche = n
+        n = tmp
+    return n
+
 #Dessine l'arbre du mobile sur le canvas à l'échelle
 def dessine():
     global canvas
@@ -128,8 +195,7 @@ def dessine():
         mobile.calculCoordPhysique()
     echelleW = width // mobile.largeurMax()
     echelleH = height // mobile.hauteurMax()
-    print("echelleW: {0} echelleH: {1} largeurM: {2} hauteurM:{3}".format(echelleW, echelleH, width//echelleW, height//echelleH))
-    echelle = min(echelleW, echelleH)*0.9
+    echelle = min(echelleW, echelleH)
     
     dessineNoeud(mobile, width//2, 0, hauteur)
     canvas.scale("all", width//2, 0, echelle, echelle)
@@ -200,19 +266,31 @@ def colorNoeud(valeur, maximum):
         r = r+str(c)
     return "#"+r
 
-#Redessine le mobile selon l'affichage classique
-def setAffichageClassic():
+#Redessine le mobile selon l'affichage en parametre
+def setAffichage(param):
     global affichage
-    affichage = CLASSIC
+    affichage = param
     if mobile != None :
         dessine()
 
-#Redessine le mobile selon l'affichage physique
-def setAffichagePhysique():
-    global affichage
-    affichage = PHYSIQUE
+#Reconstruit le mobile selon la contruction en parametre
+def setConstruction(param):
+    global construction
+    global mobile
+    construction = param
     if mobile != None :
-        dessine()
+        l = mobile.toList()
+        if construction == DIFFEQUI:
+            mobile = constrParDiffEquilibre(l)
+        elif construction == MAXGAUCHE:
+            mobile = constrParMaxGauche(l)
+        elif construction == MAXDROIT:
+            mobile = constrParMaxDroit(l)
+        elif construction == MINGAUCHE:
+            mobile = constrParMinGauche(l)
+        elif construction == MINDROIT:
+            mobile = constrParMinDroit(l)
+        startMobile()
 
 #### NOEUD ####
 class Noeud:
@@ -333,11 +411,9 @@ class Noeud:
             angle = math.asin(masse/math.fabs(masse))
         else:
             angle = math.asin(masse/rayon)
-        #print("Rayon: {0} Masse: {1} Angle: {2}".format(rayon, masse, angle*180/math.pi))
-        
-        
-        self.coordG.x = (int)(rayon*math.cos(angle))
-        self.coordG.y = (int)(rayon*math.sin(angle))
+           
+        self.coordG.x = (-rayon)*math.cos(angle)
+        self.coordG.y = rayon*math.sin(angle)
         
         self.coordD.x = -self.coordG.x
         self.coordD.y = -self.coordG.y
@@ -350,9 +426,8 @@ class Noeud:
     
     #Largeur de l'arbre
     def largeurMax(self):
-        g = self.gauche.largeurMaxGauche()
-        d = self.droit.largeurMaxDroit()
-        print("G: {0} D: {1}".format(g, d))
+        g = self.gauche.largeurMaxGauche() + self.coordG.x
+        d = self.droit.largeurMaxDroit() + self.coordD.x
         return - g + d
     
     #Largeur du côté gauche
@@ -365,8 +440,14 @@ class Noeud:
     
     #Hauteur de l'arbre
     def hauteurMax(self):
-        maximum = self.maximum()
-        return maximum * self.profondeur() + maximum//2
+        hauteur = self.maximum()
+        return self.hauteurMaxRec(hauteur)
+    
+    def hauteurMaxRec(self, hauteur):
+        d = self.coordD.y + self.droit.hauteurMaxRec(hauteur)
+        g = self.coordG.y + self.gauche.hauteurMaxRec(hauteur)
+        return hauteur + max(d,g)
+        
 
 #### POID ####
 class Poids(Noeud):
@@ -407,6 +488,13 @@ class Poids(Noeud):
     
     def largeurMaxDroit(self):
         return self.valeur//2
+    
+    def hauteurMax(self):
+        hauteur = self.maximum()
+        return self.hauteurMaxRec(hauteur)
+    
+    def hauteurMaxRec(self, hauteur):
+        return hauteur + self.valeur//2
 
 class Coord:
     def __init__(self):
@@ -425,7 +513,9 @@ if __name__ == "__main__":
     DIFFEQUI = 0
     MAXGAUCHE = 1
     MAXDROIT = 2
-    construction = DIFFEQUI
+    MINGAUCHE = 3
+    MINDROIT = 4
+    construction = MAXGAUCHE
     
     #mobile
     mobile = None
@@ -445,8 +535,8 @@ if __name__ == "__main__":
     menu.add_cascade(label="Fichier",menu=menufichier)
     
     menuaffichage = Menu(menu)
-    menuaffichage.add_command(label="Affichage classique",command=setAffichageClassic)
-    menuaffichage.add_command(label="Affichage physique",command=setAffichagePhysique)
+    menuaffichage.add_command(label="Affichage classique",command=lambda:setAffichage(CLASSIC))
+    menuaffichage.add_command(label="Affichage physique",command=lambda:setAffichage(PHYSIQUE))
     menuaffichage.add_command(label="Reset",command=lambda:canvas.delete("all"))
     menu.add_cascade(label="Affichage",menu=menuaffichage)
     
@@ -456,12 +546,27 @@ if __name__ == "__main__":
     param = Frame(fenetre, borderwidth=2)
     param.pack(side=TOP, fill=X)
     
+    paramConstr = LabelFrame(param, text="Construction du mobile")
+    paramConstr.pack(side=LEFT, padx=5)
+    boutonConstrDiff = Button(paramConstr, text="Equilibré",command=lambda:setConstruction(DIFFEQUI))
+    boutonConstrDiff.pack(side=LEFT, padx=5, pady=5)
+    boutonConstrMaxG = Button(paramConstr, text="Max gauche", command=lambda:setConstruction(MAXGAUCHE))
+    boutonConstrMaxG.pack(side=LEFT, padx=5, pady=5)
+    boutonConstrMaxD = Button(paramConstr, text="Max droit", command=lambda:setConstruction(MAXDROIT))
+    boutonConstrMaxD.pack(side=LEFT, padx=5, pady=5)
+    boutonConstrMinG = Button(paramConstr, text="Min gauche", command=lambda:setConstruction(MINGAUCHE))
+    boutonConstrMinG.pack(side=LEFT, padx=5, pady=5)
+    boutonConstrMinD = Button(paramConstr, text="Min droit", command=lambda:setConstruction(MINDROIT))
+    boutonConstrMinD.pack(side=LEFT, padx=5, pady=5)
+    
+    paramAff = LabelFrame(param, text="Affichage")
+    paramAff.pack(side=LEFT, padx=5)
     imgClassic = PhotoImage(file="res/classic.gif")
     imgPhysique = PhotoImage(file="res/physique.gif")
-    boutonAffClassic = Button(param, command=setAffichageClassic, image=imgClassic)
-    boutonAffClassic.pack(side=LEFT)
-    boutonAffPhysique = Button(param, command=setAffichagePhysique, image=imgPhysique)
-    boutonAffPhysique.pack(side=LEFT)
+    boutonAffClassic = Button(paramAff, command=lambda:setAffichage(CLASSIC), image=imgClassic)
+    boutonAffClassic.pack(side=LEFT, padx=5, pady=5)
+    boutonAffPhysique = Button(paramAff, command=lambda:setAffichage(PHYSIQUE), image=imgPhysique)
+    boutonAffPhysique.pack(side=LEFT, padx=5, pady=5)
 
     #création du canvas
     canvas = Canvas(fenetre, background="white")
