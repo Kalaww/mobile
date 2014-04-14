@@ -34,9 +34,10 @@ def lireFichier():
             k = i[:-1]
             if len(k) > 0:
                 l.append(int(k))
-        print("LIST : {}".format(l))
-        mobile = constrParDiffEquilibre(l)
-        print("MOBILE : {}".format(mobile))
+        if construction == DIFFEQUI:
+            mobile = constrParDiffEquilibre(l)
+        elif construction == MAXGAUCHE:
+            mobile = constrParMaxGauche(l)
     status.set("Fichier chargé : {}".format(nomFichier))
     startMobile(mobile)
 
@@ -78,7 +79,10 @@ def constrMobile(l):
 #Construit le mobile selon un algorithme d'arbre équilibré d'une profondeur minimale
 def constrParDiffEquilibre(l):
     n = Noeud()
-    if len(l) < 2:
+    
+    if len(l) == 0:
+        showwarning("Erreur", "La liste de poids est vide")
+    elif len(l) == 1:
         n = Poids(l[0])
         return n
     n.gauche = Poids(l[0])
@@ -87,6 +91,26 @@ def constrParDiffEquilibre(l):
     for i in range(2, len(l)):
         n = n.constrParDiffEquilibre(l[i])
     
+    return n
+
+def constrParMaxGauche(l):
+    n = Noeud()
+    l.sort()
+    
+    if len(l) == 0:
+        showwarning("Erreur", "La liste de poids est vide")
+    elif len(l) == 1:
+        n = Poids(l[0])
+        return n
+    else:
+        n.droit = Poids(l[0])
+        n.gauche = Poids(l[1])
+    
+    for i in range(2,len(l)):
+        tmp = Noeud()
+        tmp.gauche = Poids(l[i])
+        tmp.droit = n
+        n = tmp
     return n
 
 #Dessine l'arbre du mobile sur le canvas à l'échelle
@@ -104,6 +128,7 @@ def dessine():
         mobile.calculCoordPhysique()
     echelleW = width // mobile.largeurMax()
     echelleH = height // mobile.hauteurMax()
+    print("echelleW: {0} echelleH: {1} largeurM: {2} hauteurM:{3}".format(echelleW, echelleH, width//echelleW, height//echelleH))
     echelle = min(echelleW, echelleH)*0.9
     
     dessineNoeud(mobile, width//2, 0, hauteur)
@@ -304,7 +329,12 @@ class Noeud:
     def calculCoordPhysique(self):
         rayon = self.largeurNoeud()/4
         masse = self.masse()/2
-        angle = math.asin(masse/rayon)
+        if math.fabs(masse) > rayon:
+            angle = math.asin(masse/math.fabs(masse))
+        else:
+            angle = math.asin(masse/rayon)
+        #print("Rayon: {0} Masse: {1} Angle: {2}".format(rayon, masse, angle*180/math.pi))
+        
         
         self.coordG.x = (int)(rayon*math.cos(angle))
         self.coordG.y = (int)(rayon*math.sin(angle))
@@ -320,7 +350,10 @@ class Noeud:
     
     #Largeur de l'arbre
     def largeurMax(self):
-        return - self.gauche.largeurMaxGauche() + self.droit.largeurMaxDroit()
+        g = self.gauche.largeurMaxGauche()
+        d = self.droit.largeurMaxDroit()
+        print("G: {0} D: {1}".format(g, d))
+        return - g + d
     
     #Largeur du côté gauche
     def largeurMaxGauche(self):
@@ -368,7 +401,7 @@ class Poids(Noeud):
     
     def toList(self):
         return [self.valeur-1]
-        
+    
     def largeurMaxGauche(self):
         return -self.valeur//2
     
@@ -388,6 +421,11 @@ if __name__ == "__main__":
     CLASSIC = 0
     PHYSIQUE = 1
     affichage = CLASSIC
+    
+    DIFFEQUI = 0
+    MAXGAUCHE = 1
+    MAXDROIT = 2
+    construction = DIFFEQUI
     
     #mobile
     mobile = None
