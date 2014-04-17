@@ -37,8 +37,16 @@ def lireFichier():
                 l.append(int(k))
         if construction == DIFFEQUI:
             mobile = constrParDiffEquilibre(l)
+        elif construction == PPARFAIT:
+           mobile = constrPresqueParfaite(l)
         elif construction == MAXGAUCHE:
             mobile = constrParMaxGauche(l)
+        elif construction == MAXDROIT:
+            mobile = constrParMaxDroit(l)
+        elif construction == MINGAUCHE:
+            mobile = constrParMinGauche(l)
+        elif construction == MINDROIT:
+            mobile = constrParMinDroit(l)
     status.set("Fichier chargé : {}".format(nomFichier))
     startMobile()
 
@@ -83,6 +91,7 @@ def constrParDiffEquilibre(l):
     
     if len(l) == 0:
         showwarning("Erreur", "La liste de poids est vide")
+        return n
     elif len(l) == 1:
         n = Poids(l[0])
         return n
@@ -94,13 +103,16 @@ def constrParDiffEquilibre(l):
     
     return n
 
-#Construit le mobile en plaçant toutes les valeurs inferieurs dans le noeud droit, et supérieur dans le noeud parent
-def constrParMaxGauche(l):
+#Construit le mobile de façon a ce que le noeud isGauche est la valeur isMax des noeud fils
+def constrExtreme(l, isMax, isGauche):
     n = Noeud()
     l.sort()
+    if not isMax:
+        l.reverse()
     
     if len(l) == 0:
         showwarning("Erreur", "La liste de poids est vide")
+        return n
     elif len(l) == 1:
         n = Poids(l[0])
         return n
@@ -109,76 +121,40 @@ def constrParMaxGauche(l):
         n.gauche = Poids(l[1])
     
     for i in range(2,len(l)):
-        tmp = Noeud()
-        tmp.gauche = Poids(l[i])
-        tmp.droit = n
-        n = tmp
+        if not isGauche:
+            tmp = Noeud()
+            tmp.droit = Poids(l[i])
+            tmp.gauche = n
+            n = tmp
+        else:
+            tmp = Noeud()
+            tmp.gauche = Poids(l[i])
+            tmp.droit = n
+            n = tmp
     return n
 
-#Construit le mobile en plaçant toutes les valeurs inferieurs dans le noeud gauche, et supérieur dans le noeud parent
-def constrParMaxDroit(l):
+#Construit le mobile le plus équilibrée possible avec une marge d'erreur minimale   
+def constrPresqueParfaite(l):
     n = Noeud()
-    l.sort()
-    
     if len(l) == 0:
         showwarning("Erreur", "La liste de poids est vide")
+        return n
     elif len(l) == 1:
         n = Poids(l[0])
         return n
     else:
-        n.droit = Poids(l[0])
-        n.gauche = Poids(l[1])
-    
-    for i in range(2,len(l)):
-        tmp = Noeud()
-        tmp.droit = Poids(l[i])
-        tmp.gauche = n
-        n = tmp
-    return n
-
-#Construit le mobile en plaçant toutes les valeurs superieurs dans le noeud gauche, et supérieur dans le noeud parent
-def constrParMinGauche(l):
-    n = Noeud()
-    l.sort()
-    l.reverse()
-    
-    if len(l) == 0:
-        showwarning("Erreur", "La liste de poids est vide")
-    elif len(l) == 1:
-        n = Poids(l[0])
-        return n
-    else:
-        n.droit = Poids(l[0])
-        n.gauche = Poids(l[1])
-    
-    for i in range(2,len(l)):
-        tmp = Noeud()
-        tmp.gauche = Poids(l[i])
-        tmp.droit = n
-        n = tmp
-    return n
-
-#Construit le mobile en plaçant toutes les valeurs superieurs dans le noeud droit, et supérieur dans le noeud parent
-def constrParMinDroit(l):
-    n = Noeud()
-    l.sort()
-    l.reverse()
-    
-    if len(l) == 0:
-        showwarning("Erreur", "La liste de poids est vide")
-    elif len(l) == 1:
-        n = Poids(l[0])
-        return n
-    else:
-        n.droit = Poids(l[0])
-        n.gauche = Poids(l[1])
-    
-    for i in range(2,len(l)):
-        tmp = Noeud()
-        tmp.droit = Poids(l[i])
-        tmp.gauche = n
-        n = tmp
-    return n
+        demi = sum(l)//2
+        b = False
+        for i in range(demi):
+            b = n.constrPresqueParfaite(l, list(), 0, i)
+            if b:
+                break
+        if not b:
+            showwarning("Erreur", "Il n'y a pas de solution pour construire un arbre presque parfait avec ces valeurs")
+            return None
+        else:
+            print("Construit avec un pas de ",i)
+            return n
 
 #Dessine l'arbre du mobile sur le canvas à l'échelle
 def dessine():
@@ -207,7 +183,7 @@ def dessineNoeud(n, x, y, hauteur):
     canvas.create_line(x, y, x, y + hauteur)
     
     if type(n) is Poids:
-        canvas.create_oval(x - n.valeur//2, y + hauteur - n.valeur//2, x + n.valeur//2, y + hauteur + n.valeur//2, fill=colorNoeud(n.valeur, hauteur))
+        canvas.create_oval(x - n.valeur/2, y + hauteur - n.valeur/2, x + n.valeur/2, y + hauteur + n.valeur/2, fill=colorNoeud(n.valeur, hauteur))
         canvas.create_text(x, y + hauteur, text=str(n))
     else:
         canvas.create_line(x + n.coordG.x, y + hauteur + n.coordG.y, x + n.coordD.x, y + hauteur + n.coordD.y)
@@ -277,19 +253,22 @@ def setAffichage(param):
 def setConstruction(param):
     global construction
     global mobile
+    old = construction
     construction = param
-    if mobile != None :
+    if mobile != None and param != old:
         l = mobile.toList()
         if construction == DIFFEQUI:
             mobile = constrParDiffEquilibre(l)
+        elif construction  == PPARFAIT:
+            mobile = constrPresqueParfaite(l)
         elif construction == MAXGAUCHE:
-            mobile = constrParMaxGauche(l)
+            mobile = constrExtreme(l, True, True)
         elif construction == MAXDROIT:
-            mobile = constrParMaxDroit(l)
+            mobile = constrExtreme(l, True, False)
         elif construction == MINGAUCHE:
-            mobile = constrParMinGauche(l)
+            mobile = constrExtreme(l, False, True)
         elif construction == MINDROIT:
-            mobile = constrParMinDroit(l)
+            mobile = constrExtreme(l, False, False)
         startMobile()
 
 #### NOEUD ####
@@ -360,6 +339,45 @@ class Noeud:
         else:
             self.gauche = self.gauche.constrParDiffEquilibre(v)
         return self
+    
+    #Construit le mobile le plus équilibré possible récursivement suivant une marge d'erreur donnée
+    def constrPresqueParfaite(self, l, save, i, pas):
+        if len(l) == 2:
+            self.gauche = Poids(l[0])
+            self.droit = Poids(l[1])
+            return True
+        demi = sum(l)//2
+        for k in range(i, len(l)):
+            if sum(save) + l[k] <= demi+pas:
+                save.append(l[k])
+            if sum(save) >= demi-pas and sum(save) <= demi+pas:
+                bg = False
+                bd = False
+                if len(save) == 1 :
+                    self.gauche = Poids(save[0])
+                    bg = True
+                else:
+                    self.gauche = Noeud()
+                    bg = self.gauche.constrPresqueParfaite(save, list(), 0, pas)
+                saveOp = [ z for z in l]
+                for z in save:
+                    saveOp.remove(z)
+                if len(saveOp) == 1:
+                    self.droit = Poids(saveOp[0])
+                    bd = True
+                else:
+                    self.droit = Noeud()
+                    bd = self.droit.constrPresqueParfaite(saveOp, list(), 0, pas)
+                if bd and bg:
+                    return True
+                save.pop(len(save)-1)
+        boo = False
+        if i < len(l)-1:
+            boo = self.constrPresqueParfaite(l, list(), i+1, pas)
+        return boo
+                
+        
+        
     
     #Liste des poids
     def toList(self):
@@ -453,11 +471,11 @@ class Noeud:
 class Poids(Noeud):
     
     def __init__(self, v):
-        self.valeur = v +1
+        self.valeur = v
         self.coord = Coord()
     
     def __str__(self):
-        return str(self.valeur-1)
+        return str(self.valeur)
     
     def __getattr__(self, nom):
         print("Pas d'attribut ",nom," dans un objet Poids")
@@ -481,7 +499,7 @@ class Poids(Noeud):
         return p
     
     def toList(self):
-        return [self.valeur-1]
+        return [self.valeur]
     
     def largeurMaxGauche(self):
         return -self.valeur//2
@@ -515,7 +533,8 @@ if __name__ == "__main__":
     MAXDROIT = 2
     MINGAUCHE = 3
     MINDROIT = 4
-    construction = MAXGAUCHE
+    PPARFAIT = 5
+    construction = DIFFEQUI
     
     #mobile
     mobile = None
@@ -550,6 +569,8 @@ if __name__ == "__main__":
     paramConstr.pack(side=LEFT, padx=5)
     boutonConstrDiff = Button(paramConstr, text="Equilibré",command=lambda:setConstruction(DIFFEQUI))
     boutonConstrDiff.pack(side=LEFT, padx=5, pady=5)
+    boutonConstrPP = Button(paramConstr, text="Presque parfait", command=lambda:setConstruction(PPARFAIT))
+    boutonConstrPP.pack(side=LEFT, padx=5, pady=5)
     boutonConstrMaxG = Button(paramConstr, text="Max gauche", command=lambda:setConstruction(MAXGAUCHE))
     boutonConstrMaxG.pack(side=LEFT, padx=5, pady=5)
     boutonConstrMaxD = Button(paramConstr, text="Max droit", command=lambda:setConstruction(MAXDROIT))
