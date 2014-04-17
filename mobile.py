@@ -153,7 +153,7 @@ def constrPresqueParfaite(l):
             showwarning("Erreur", "Il n'y a pas de solution pour construire un arbre presque parfait avec ces valeurs")
             return None
         else:
-            print("Construit avec un pas de ",i)
+            showinfo("Information", "Mobile généré avec une marge d'erreur de +-"+str(i))
             return n
 
 #Dessine l'arbre du mobile sur le canvas à l'échelle
@@ -342,15 +342,11 @@ class Noeud:
     
     #Construit le mobile le plus équilibré possible récursivement suivant une marge d'erreur donnée
     def constrPresqueParfaite(self, l, save, i, pas):
-        if len(l) == 2:
-            self.gauche = Poids(l[0])
-            self.droit = Poids(l[1])
-            return True
         demi = sum(l)//2
         for k in range(i, len(l)):
             if sum(save) + l[k] <= demi+pas:
                 save.append(l[k])
-            if sum(save) >= demi-pas and sum(save) <= demi+pas:
+            if sum(save) >= demi-pas and sum(save) <= demi+pas and sum(l)-sum(save) >= demi-pas and sum(l)-sum(save) <= demi+pas:
                 bg = False
                 bd = False
                 if len(save) == 1 :
@@ -375,9 +371,6 @@ class Noeud:
         if i < len(l)-1:
             boo = self.constrPresqueParfaite(l, list(), i+1, pas)
         return boo
-                
-        
-        
     
     #Liste des poids
     def toList(self):
