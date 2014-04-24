@@ -1,4 +1,4 @@
-#!/usr/bin/python3.3
+#!/usr/bin/python3.4
 from tkinter import *
 from tkinter.messagebox import *
 from tkinter.filedialog import *
@@ -546,6 +546,15 @@ if __name__ == "__main__":
     menufichier.add_command(label="Quitter",command=fenetre.destroy)
     menu.add_cascade(label="Fichier",menu=menufichier)
     
+    menugene = Menu(menu)
+    menugene.add_command(label="Simple", command=lambda:setConstruction(DIFFEQUI))
+    menugene.add_command(label="Equilibrée", command=lambda:setConstruction(PPARFAIT))
+    menugene.add_command(label="Par maximum gauche", command=lambda:setConstruction(MAXGAUCHE))
+    menugene.add_command(label="Par maximum droit", command=lambda:setConstruction(MAXDROIT))
+    menugene.add_command(label="Par minimum gauche", command=lambda:setConstruction(MINGAUCHE))
+    menugene.add_command(label="Par minimum droit", command=lambda:setConstruction(MINDROIT))
+    menu.add_cascade(label="Construction", menu=menugene)
+    
     menuaffichage = Menu(menu)
     menuaffichage.add_command(label="Affichage classique",command=lambda:setAffichage(CLASSIC))
     menuaffichage.add_command(label="Affichage physique",command=lambda:setAffichage(PHYSIQUE))
@@ -560,9 +569,9 @@ if __name__ == "__main__":
     
     paramConstr = LabelFrame(param, text="Construction du mobile")
     paramConstr.pack(side=LEFT, padx=5)
-    boutonConstrDiff = Button(paramConstr, text="Equilibré",command=lambda:setConstruction(DIFFEQUI))
+    boutonConstrDiff = Button(paramConstr, text="Simple",command=lambda:setConstruction(DIFFEQUI))
     boutonConstrDiff.pack(side=LEFT, padx=5, pady=5)
-    boutonConstrPP = Button(paramConstr, text="Presque parfait", command=lambda:setConstruction(PPARFAIT))
+    boutonConstrPP = Button(paramConstr, text="Equilibré", command=lambda:setConstruction(PPARFAIT))
     boutonConstrPP.pack(side=LEFT, padx=5, pady=5)
     boutonConstrMaxG = Button(paramConstr, text="Max gauche", command=lambda:setConstruction(MAXGAUCHE))
     boutonConstrMaxG.pack(side=LEFT, padx=5, pady=5)
