@@ -271,7 +271,7 @@ def setConstruction(param):
             mobile = constrExtreme(l, False, False)
         startMobile()
 
-#### NOEUD ####
+#### NOEUD #### : noeud d'un arbre, correspond au embranchement dans le mobile
 class Noeud:
     
     def __init__(self):
@@ -320,7 +320,7 @@ class Noeud:
         else:
             return d+1
     
-    #Construit le mobile selon un algorithme d'arbre équilibré d'une profondeur minimale
+    #Construit le mobile selon un algorithme d'arbre simplement équilibré d'une profondeur minimale
     def constrParDiffEquilibre(self, v):
         poidG = self.gauche.peser()
         poidD = self.droit.peser()
@@ -454,13 +454,14 @@ class Noeud:
         hauteur = self.maximum()
         return self.hauteurMaxRec(hauteur)
     
+    #Hauteur max de l'arbre récursivement
     def hauteurMaxRec(self, hauteur):
         d = self.coordD.y + self.droit.hauteurMaxRec(hauteur)
         g = self.coordG.y + self.gauche.hauteurMaxRec(hauteur)
         return hauteur + max(d,g)
         
 
-#### POID ####
+#### POID #### : feuille d'un arbre, correspond au poids d'un mobile
 class Poids(Noeud):
     
     def __init__(self, v):
@@ -476,37 +477,46 @@ class Poids(Noeud):
     def peser(self):
         return self.valeur
     
+    #Poids max de l'arbre (ici lui même)
     def maximum(self):
         return self.valeur
     
     def __len__(self):
         return 1
     
+    #Profondeur de l'arbre (ici 1)
     def profondeur(self):
         return 1
     
+    #Construit le mobile selon un algorithme d'arbre simplement équilibré d'une profondeur minimale
     def constrParDiffEquilibre(self, v):
         p = Noeud()
         p.gauche = self
         p.droit = Poids(v)
         return p
     
+    #Convertion en liste
     def toList(self):
         return [self.valeur]
     
+    #Largeur max du côté gauche
     def largeurMaxGauche(self):
         return -self.valeur//2
     
+    #Largeur max du côté droit
     def largeurMaxDroit(self):
         return self.valeur//2
     
+    #Hauteur max
     def hauteurMax(self):
         hauteur = self.maximum()
         return self.hauteurMaxRec(hauteur)
     
+    #Hauteur du poids
     def hauteurMaxRec(self, hauteur):
         return hauteur + self.valeur//2
 
+#Stocke deux coordonnées x,y
 class Coord:
     def __init__(self):
         self.x = 0
@@ -563,7 +573,7 @@ if __name__ == "__main__":
     
     fenetre.config(menu=menu)
 
-    #création de la zone de paramétrage
+    #création de la barre de raccourcis
     param = Frame(fenetre, borderwidth=2)
     param.pack(side=TOP, fill=X)
     
