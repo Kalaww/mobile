@@ -598,14 +598,17 @@ if __name__ == "__main__":
     boutonConstrMinD = Button(paramConstr, text="Min droit", command=lambda:setConstruction(MINDROIT))
     boutonConstrMinD.pack(side=LEFT, padx=5, pady=5)
     
-    paramAff = LabelFrame(param, text="Affichage")
-    paramAff.pack(side=LEFT, padx=5)
-    imgClassic = PhotoImage(file="res/classic.gif")
-    imgPhysique = PhotoImage(file="res/physique.gif")
-    boutonAffClassic = Button(paramAff, command=lambda:setAffichage(CLASSIC), image=imgClassic)
-    boutonAffClassic.pack(side=LEFT, padx=5, pady=5)
-    boutonAffPhysique = Button(paramAff, command=lambda:setAffichage(PHYSIQUE), image=imgPhysique)
-    boutonAffPhysique.pack(side=LEFT, padx=5, pady=5)
+    try:
+        paramAff = LabelFrame(param, text="Affichage")
+        paramAff.pack(side=LEFT, padx=5)
+        imgClassic = PhotoImage(file="res/classic.gif")
+        imgPhysique = PhotoImage(file="res/physique.gif")
+        boutonAffClassic = Button(paramAff, command=lambda:setAffichage(CLASSIC), image=imgClassic)
+        boutonAffClassic.pack(side=LEFT, padx=5, pady=5)
+        boutonAffPhysique = Button(paramAff, command=lambda:setAffichage(PHYSIQUE), image=imgPhysique)
+        boutonAffPhysique.pack(side=LEFT, padx=5, pady=5)
+    except TclError:
+        showwarning("Images manquantes", "Il manque des images pour l'interface graphique. Leur affichage a été désactivé.\n [dossier 'res', image : 'classic.gif', 'physique.gif']")
 
     #création du canvas
     canvas = Canvas(fenetre, background="white")
