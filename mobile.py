@@ -17,6 +17,8 @@ def lireFichier():
     global status
     try:
         nomFichier = askopenfilename(title="Ouvrir un fichier", filetypes=[("fichiers txt",".txt"),("tous fichiers",".*")])
+        if nomFichier == None or len(nomFichier) == 0:
+            return 
         fichier = open(nomFichier, "r")
     except IOError:
         showwarning("Echec", "Aucun fichier de ce nom est présent")
@@ -54,6 +56,8 @@ def lireFichier():
 def saveMobile():
     global mobile
     nomFichier = asksaveasfilename(title="Sauvegarder un mobile", filetypes=[("fichiers txt",".txt"),("tous fichiers",".*")])
+    if nomFichier == None or len(nomFichier) == 0:
+        return 
     fichier = open(nomFichier, "w")
     fichier.write(str(mobile))
     fichier.close()
@@ -62,6 +66,8 @@ def saveMobile():
 def saveList():
     global mobile
     nomFichier = asksaveasfilename(title="Sauvegarder un mobile", filetypes=[("fichiers txt",".txt"),("tous fichiers",".*")])
+    if nomFichier == None or len(nomFichier) == 0:
+        return 
     fichier = open(nomFichier, "w")
     l = mobile.toList()
     for i in l:
